@@ -1,37 +1,35 @@
-﻿using System.Net;
+﻿using System.IO;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 using Application.Services;
-using Domain.Entities;
-using Microsoft.Azure.Functions.Worker;
-using Microsoft.Azure.Functions.Worker.Http;
-
+using Presentation.DTOs;
 
 namespace Presentation.Functions;
 
-public class TaskFunction
+public class TaskFunction(ITaskService taskService)
 {
-    private readonly TaskService _taskService;
+    private readonly ITaskService _taskService = taskService;
 
-    public TaskFunction(TaskService taskService)
-    {
-        _taskService = taskService;
-    }
-
-    [Function("GetAllTasks")]
-    public async Task<HttpResponseData> GetAllTasks([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequestData req)
+    [FunctionName("GetAllTasks")]
+    public async Task<IActionResult> GetAllTasks([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequest req)
     {
         var tasks = await _taskService.GetAllTasksAsync();
-        var response = req.CreateResponse(HttpStatusCode.OK);
-        await response.WriteAsJsonAsync(tasks);
-        return response;
+        string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+        dynamic data = JsonConvert.DeserializeObject(requestBody);
+        return new OkObjectResult(data);
     }
 
-    [Function("CreateTask")]
-    public async Task<HttpResponseData> CreateTask([HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequestData req)
+    [FunctionName("CreateTask")]
+    public async Task<IActionResult> CreateTask(
+        [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequest req)
     {
-        var task = await req.ReadFromJsonAsync<TaskItem>();
-        await _taskService.CreateTaskAsync(task.Title, task.Description);
+        var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+        var createTaskDto = JsonConvert.DeserializeObject<CreateTaskDto>(requestBody);
 
-        var response = req.CreateResponse(HttpStatusCode.Created);
-        return response;
+        return new OkObjectResult(createTaskDto);
     }
 }

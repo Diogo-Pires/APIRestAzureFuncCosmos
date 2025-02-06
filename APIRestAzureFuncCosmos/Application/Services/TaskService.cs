@@ -1,9 +1,11 @@
 ﻿using Application.Interfaces;
+using Application.Mappers;
 using Domain.Entities;
+using Presentation.DTOs;
 
 namespace Application.Services;
 
-public class TaskService
+public class TaskService : ITaskService
 {
     private readonly ITaskRepository _taskRepository;
 
@@ -17,9 +19,14 @@ public class TaskService
         return await _taskRepository.GetAllTasksAsync();
     }
 
-    public async Task CreateTaskAsync(string title, string description)
+    public async Task<TaskItem> CreateTaskAsync(CreateTaskDto createTaskDto)
     {
-        var task = new TaskItem(title, description);
-        await _taskRepository.AddTaskAsync(task);
+        if (string.IsNullOrWhiteSpace(createTaskDto.Title))
+        {
+            throw new ArgumentException("Title is required.");
+        }
+
+        var taskEntity = TaskMapper.ToEntity(createTaskDto);
+        return await _taskRepository.AddTaskAsync(taskEntity);
     }
 }

@@ -29,8 +29,8 @@ public class TaskRepository : ITaskRepository
         return results;
     }
 
-    public async Task AddTaskAsync(TaskItem task)
+    public async Task<TaskItem> AddTaskAsync(TaskItem task)
     {
-        await _container.CreateItemAsync(task, new PartitionKey(task.Id));
+        return await _container.CreateItemAsync(task, new PartitionKey(task.Id));
     }
 }
