@@ -15,7 +15,7 @@ public class TaskFunction(ITaskService taskService)
     private readonly ITaskService _taskService = taskService;
 
     [FunctionName("GetAllTasks")]
-    public async Task<IActionResult> GetAllTasks([HttpTrigger(AuthorizationLevel.Function, "get")] HttpRequest req)
+    public async Task<IActionResult> GetAllTasks([HttpTrigger(AuthorizationLevel.Anonymous, "get")] HttpRequest req)
     {
         var tasks = await _taskService.GetAllTasksAsync();
         string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
@@ -25,7 +25,7 @@ public class TaskFunction(ITaskService taskService)
 
     [FunctionName("CreateTask")]
     public async Task<IActionResult> CreateTask(
-        [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequest req)
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req)
     {
         var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
         var createTaskDto = JsonConvert.DeserializeObject<CreateTaskDto>(requestBody);
