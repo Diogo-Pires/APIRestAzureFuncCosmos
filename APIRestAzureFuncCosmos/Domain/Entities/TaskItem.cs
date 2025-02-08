@@ -1,11 +1,26 @@
-﻿namespace Domain.Entities;
+﻿using Newtonsoft.Json;
+
+namespace Domain.Entities;
 
 public class TaskItem(string title, string description)
 {
+    [JsonProperty("id")]
     public string Id { get; private set; } = Guid.NewGuid().ToString();
-    public string Title { get; private set; } = title;
-    public string Description { get; private set; } = description;
-    public bool IsCompleted { get; private set; } = false;
+
+
+    [JsonProperty("title")]
+    public string Title { get; set; } = title;
+
+
+    [JsonProperty("description")]
+    public string Description { get; set; } = description;
+
+
+    [JsonProperty("isCompleted")]
+    public bool IsCompleted { get; set; } = false;
+
+
+    [JsonProperty("createdAt")]
     public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
 
     public void MarkAsCompleted()
