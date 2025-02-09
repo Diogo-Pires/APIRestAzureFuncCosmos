@@ -1,3 +1,9 @@
 ﻿namespace Application.DTOs;
 
-public record TaskDTO(string Id, string Title, string Description, bool IsCompleted, DateTime CreatedAt);
+public record TaskDTO(
+    string? Id,
+    string? Title,
+    string? Description,
+    bool IsCompleted, 
+    DateTime? CreatedAt
+);  

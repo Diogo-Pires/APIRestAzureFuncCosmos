@@ -6,6 +6,8 @@ using Microsoft.Azure.Cosmos;
 using Infrastructure.Persistence;
 using Infrastructure.Config;
 using Microsoft.Extensions.Configuration;
+using Presentation.Validations;
+using FluentValidation;
 
 [assembly: FunctionsStartup(typeof(Presentation.Startup))]
 namespace Presentation;
@@ -20,5 +22,8 @@ public class Startup : FunctionsStartup
         builder.Services.AddSingleton(x => cosmosSettings);
         builder.Services.AddTransient<ITaskRepository, TaskRepository>();
         builder.Services.AddTransient<ITaskService, TaskService>();
+
+        builder.Services.AddValidatorsFromAssemblyContaining<CreateTaskValidator>();
+
     }
 }
