@@ -1,13 +1,13 @@
-﻿using Application.Services;
-using Application.Interfaces;
-using Microsoft.Azure.Functions.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Azure.Cosmos;
-using Infrastructure.Persistence;
-using Infrastructure.Config;
-using Microsoft.Extensions.Configuration;
-using Presentation.Validations;
+﻿using Application.Interfaces;
+using Application.Services;
 using FluentValidation;
+using Infrastructure.Config;
+using Infrastructure.Persistence;
+using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Functions.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Presentation.Validations;
 
 [assembly: FunctionsStartup(typeof(Presentation.Startup))]
 namespace Presentation;

@@ -1,20 +1,20 @@
-﻿using System.IO;
-using System.Threading.Tasks;
+﻿using Application.DTOs;
+using Application.Interfaces;
+using FluentValidation;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
-using Application.DTOs;
-using Application.Interfaces;
 using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 using Microsoft.OpenApi.Models;
-using System.Net;
-using System.Collections.Generic;
+using Newtonsoft.Json;
 using Shared.Enums;
 using Shared.Validations;
-using FluentValidation;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
 
 namespace Presentation;
 
@@ -69,7 +69,7 @@ public class TaskFunction(ITaskService taskService, IValidator<TaskDTO> createVa
     public async Task<IActionResult> GetTaskById(
         [HttpTrigger(AuthorizationLevel.Anonymous, RestUtilityConsts.GET, Route = $"{ROUTE_NAME}/{{id}}")] HttpRequest req, string id)
     {
-        if (string.IsNullOrWhiteSpace(id)) 
+        if (string.IsNullOrWhiteSpace(id))
         {
             return new BadRequestObjectResult(RestUtilityConsts.VALIDATION_ID_NOT_EMPTY);
         }
@@ -128,7 +128,7 @@ public class TaskFunction(ITaskService taskService, IValidator<TaskDTO> createVa
 
         return new CreatedAtActionResult(
             nameof(GetTaskById),
-            "Task",          
+            "Task",
             new { id = createdTask.Id },
             createdTask
         );
@@ -179,7 +179,7 @@ public class TaskFunction(ITaskService taskService, IValidator<TaskDTO> createVa
 
         var updatedTask = await _taskService.UpdateAsync(updateTaskDto);
         if (updatedTask == null)
-        { 
+        {
             return new NotFoundResult();
         }
 

@@ -16,7 +16,7 @@ public class TaskService(ITaskRepository taskRepository) : ITaskService
     public async Task<TaskDTO?> GetByIdAsync(string id)
     {
         var task = await _taskRepository.GetByIdAsync(id);
-        if(task == null)
+        if (task == null)
         {
             return null;
         }
@@ -42,7 +42,7 @@ public class TaskService(ITaskRepository taskRepository) : ITaskService
         var existingTask = await _taskRepository.GetByIdAsync(updateTaskDto.Id);
         if (existingTask == null)
         {
-            return null;        
+            return null;
         }
 
         existingTask.Title = updateTaskDto.Title;
@@ -51,7 +51,7 @@ public class TaskService(ITaskRepository taskRepository) : ITaskService
 
         var updatedTask = await _taskRepository.UpdateAsync(existingTask);
         if (updatedTask == null)
-        { 
+        {
             return null;
         }
 

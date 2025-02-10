@@ -21,7 +21,7 @@ public class TaskRepository : ITaskRepository
     public async Task<List<TaskItem>> GetAllAsync()
     {
         List<TaskItem> taskList = [];
-        using (FeedIterator<TaskItem> setIterator = 
+        using (FeedIterator<TaskItem> setIterator =
                 _container.GetItemLinqQueryable<TaskItem>()
                     .ToFeedIterator())
         {
@@ -70,4 +70,4 @@ public class TaskRepository : ITaskRepository
             return false;
         }
     }
-}   
+}

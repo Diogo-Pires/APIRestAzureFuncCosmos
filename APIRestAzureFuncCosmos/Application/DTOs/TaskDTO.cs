@@ -4,6 +4,6 @@ public record TaskDTO(
     string Id,
     string Title,
     string Description,
-    bool IsCompleted, 
+    bool IsCompleted,
     DateTime? CreatedAt
-);  
+);
