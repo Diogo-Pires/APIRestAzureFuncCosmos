@@ -4,9 +4,9 @@ namespace Application.Interfaces;
 
 public interface ITaskRepository
 {
-    Task<List<TaskItem>> GetAllTasksAsync();
-    //Task<TaskItem> GetTaskByIdAsync(string id);
-    Task AddTaskAsync(TaskItem task);
-    //Task UpdateTaskAsync(TaskItem task);
-    //Task DeleteTaskAsync(string id);
+    Task<List<TaskItem>> GetAllAsync();
+    Task<TaskItem?> GetByIdAsync(string id);
+    Task<TaskItem> AddAsync(TaskItem task);
+    Task<TaskItem?> UpdateAsync(TaskItem task);
+    Task<bool> DeleteByIdAsync(string id);
 }
