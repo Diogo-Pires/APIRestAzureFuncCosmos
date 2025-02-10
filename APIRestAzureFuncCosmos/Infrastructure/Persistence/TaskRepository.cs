@@ -1,11 +1,9 @@
-﻿using Application.DTOs;
-using Application.Interfaces;
+﻿using Application.Interfaces;
 using Domain.Entities;
 using Infrastructure.Config;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Cosmos.Linq;
 using System.Net;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Persistence;
 
@@ -39,8 +37,17 @@ public class TaskRepository : ITaskRepository
         return taskList;
     }
 
-    public async Task<TaskItem> GetByIdAsync(string id) =>
-        await _container.ReadItemAsync<TaskItem>(id, new PartitionKey(id));
+    public async Task<TaskItem?> GetByIdAsync(string id)
+    {
+        try
+        {
+            return await _container.ReadItemAsync<TaskItem>(id, new PartitionKey(id));
+        }
+        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+    }
 
     public async Task<TaskItem> AddAsync(TaskItem task) =>
         await _container.CreateItemAsync(task, new PartitionKey(task.Id));
@@ -53,7 +60,14 @@ public class TaskRepository : ITaskRepository
 
     public async Task<bool> DeleteByIdAsync(string id)
     {
-        var response = await _container.DeleteItemAsync<TaskItem>(id, new PartitionKey(id));
-        return response.StatusCode == HttpStatusCode.NoContent;
+        try
+        {
+            var response = await _container.DeleteItemAsync<TaskItem>(id, new PartitionKey(id));
+            return response.StatusCode == HttpStatusCode.NoContent;
+        }
+        catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return false;
+        }
     }
 }   

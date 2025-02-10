@@ -13,8 +13,16 @@ public class TaskService(ITaskRepository taskRepository) : ITaskService
                 .Select(TaskMapper.ToDTO)
                 .ToList();
 
-    public async Task<TaskDTO> GetByIdAsync(string id) =>
-        TaskMapper.ToDTO(await _taskRepository.GetByIdAsync(id));
+    public async Task<TaskDTO?> GetByIdAsync(string id)
+    {
+        var task = await _taskRepository.GetByIdAsync(id);
+        if(task == null)
+        {
+            return null;
+        }
+
+        return TaskMapper.ToDTO(task);
+    }
 
     public async Task<TaskDTO> CreateAsync(TaskDTO createTaskDto)
     {
@@ -31,11 +39,6 @@ public class TaskService(ITaskRepository taskRepository) : ITaskService
 
     public async Task<TaskDTO?> UpdateAsync(TaskDTO updateTaskDto)
     {
-        if (string.IsNullOrWhiteSpace(updateTaskDto.Title))
-        {
-            throw new ArgumentException("Title is required.");
-        }
-
         var existingTask = await _taskRepository.GetByIdAsync(updateTaskDto.Id);
         if (existingTask == null)
         {
