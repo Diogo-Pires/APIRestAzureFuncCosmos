@@ -7,6 +7,8 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Presentation.Exceptions;
+using Presentation.Interfaces;
 using Presentation.Validations;
 
 [assembly: FunctionsStartup(typeof(Presentation.Startup))]
@@ -18,6 +20,7 @@ public class Startup : FunctionsStartup
     {
         var cosmosSettings = builder.GetContext().Configuration.GetSection("CosmosDb").Get<CosmosDbSettings>();
 
+        builder.Services.AddSingleton<IExceptionHandler, GlobalExceptionHandler>();
         builder.Services.AddSingleton(x => new CosmosClient(cosmosSettings.Endpoint, cosmosSettings.Key));
         builder.Services.AddSingleton(x => cosmosSettings);
         builder.Services.AddTransient<ITaskRepository, TaskRepository>();

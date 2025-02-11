@@ -10,10 +10,10 @@ public class CreateTaskValidator : AbstractValidator<TaskDTO>
     {
         RuleFor(t => t.Title)
             .NotEmpty()
-            .WithMessage(RestUtilityConsts.VALIDATION_TITLE_NOT_EMPTY);
+            .WithMessage(UtilityConsts.VALIDATION_TITLE_NOT_EMPTY);
 
         RuleFor(t => t.Description)
             .NotEmpty()
-            .WithMessage(RestUtilityConsts.VALIDATION_DESCRIPTION_NOT_EMPTY);
+            .WithMessage(UtilityConsts.VALIDATION_DESCRIPTION_NOT_EMPTY);
     }
 }

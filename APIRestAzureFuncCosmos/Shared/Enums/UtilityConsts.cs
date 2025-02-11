@@ -1,5 +1,5 @@
 ﻿namespace Shared.Enums;
-public struct RestUtilityConsts
+public struct UtilityConsts
 {
     public const string GET = "get";
     public const string POST = "post";
