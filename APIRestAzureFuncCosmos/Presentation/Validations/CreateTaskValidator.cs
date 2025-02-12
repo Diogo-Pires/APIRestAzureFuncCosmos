@@ -1,6 +1,6 @@
 ﻿using Application.DTOs;
 using FluentValidation;
-using Shared.Enums;
+using Shared.Consts;
 
 namespace Presentation.Validations;
 

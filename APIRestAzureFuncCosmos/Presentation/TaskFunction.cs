@@ -8,7 +8,7 @@ using Microsoft.Azure.WebJobs.Extensions.OpenApi.Core.Attributes;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
 using Presentation.Interfaces;
-using Shared.Enums;
+using Shared.Consts;
 using Shared.Validations;
 using System;
 using System.Collections.Generic;
