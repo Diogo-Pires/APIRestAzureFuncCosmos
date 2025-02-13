@@ -9,6 +9,6 @@
     "CosmosDb:DatabaseName": "TasksDB",
     "CosmosDb:ContainerName": "TasksContainer",
     "Jagger:AgentHost": "localhost",
-    "Jagger:AgentPort": 6831
+    "Jagger:AgentPort": 16686
   }
 }

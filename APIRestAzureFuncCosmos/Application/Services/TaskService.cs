@@ -13,14 +13,14 @@ public class TaskService(ITaskRepository taskRepository, IValidator<TaskDTO> cre
     private readonly ITaskRepository _taskRepository = taskRepository;
     private readonly IValidator<TaskDTO> _createValidator = createValidator;
 
-    public async Task<List<TaskDTO>> GetAllAsync() =>
-        (await _taskRepository.GetAllAsync())
+    public async Task<List<TaskDTO>> GetAllAsync(CancellationToken cancellationToken) =>
+        (await _taskRepository.GetAllAsync(cancellationToken))
                 .Select(TaskMapper.ToDTO)
                 .ToList();
 
-    public async Task<TaskDTO?> GetByIdAsync(string id)
+    public async Task<TaskDTO?> GetByIdAsync(string id, CancellationToken cancellationToken)
     {
-        var task = await _taskRepository.GetByIdAsync(id);
+        var task = await _taskRepository.GetByIdAsync(id, cancellationToken);
         if (task == null)
         {
             return null;
@@ -29,9 +29,9 @@ public class TaskService(ITaskRepository taskRepository, IValidator<TaskDTO> cre
         return TaskMapper.ToDTO(task);
     }
 
-    public async Task<Result<TaskDTO>> CreateAsync(TaskDTO createTaskDto)
+    public async Task<Result<TaskDTO>> CreateAsync(TaskDTO createTaskDto, CancellationToken cancellationToken)
     {
-        var validationResult = await _createValidator.ValidateAsync(createTaskDto);
+        var validationResult = await _createValidator.ValidateAsync(createTaskDto, cancellationToken);
         if (!validationResult.IsValid)
         {
             var errors = validationResult.Errors.Select(e => e.ErrorMessage);
@@ -39,18 +39,18 @@ public class TaskService(ITaskRepository taskRepository, IValidator<TaskDTO> cre
         }
 
         var taskEntity = TaskMapper.ToEntity(createTaskDto);
-        var createdTask = await _taskRepository.AddAsync(taskEntity);
+        var createdTask = await _taskRepository.AddAsync(taskEntity, cancellationToken);
 
         return Result.Ok(TaskMapper.ToDTO(createdTask));
     }
 
-    public async Task<TaskDTO?> UpdateAsync(TaskDTO updateTaskDto)
+    public async Task<TaskDTO?> UpdateAsync(TaskDTO updateTaskDto, CancellationToken cancellationToken)
     {
         TaskItem? existingTask = null;
 
         try
         {
-            existingTask = await _taskRepository.GetByIdAsync(updateTaskDto.Id);
+            existingTask = await _taskRepository.GetByIdAsync(updateTaskDto.Id, cancellationToken);
             if (existingTask == null)
             {
                 return null;
@@ -60,27 +60,20 @@ public class TaskService(ITaskRepository taskRepository, IValidator<TaskDTO> cre
         {
             throw new TaskServiceException($"{nameof(UpdateAsync)} - Error fetching task from database", ex);
         }
+        
+        existingTask.Title = updateTaskDto.Title;
+        existingTask.Description = updateTaskDto.Description;
+        existingTask.IsCompleted = updateTaskDto.IsCompleted;
 
-        try
+        var updatedTask = await _taskRepository.UpdateAsync(existingTask, cancellationToken);
+        if (updatedTask == null)
         {
-            existingTask.Title = updateTaskDto.Title;
-            existingTask.Description = updateTaskDto.Description;
-            existingTask.IsCompleted = updateTaskDto.IsCompleted;
-
-            var updatedTask = await _taskRepository.UpdateAsync(existingTask);
-            if (updatedTask == null)
-            {
-                return null;
-            }
-
-            return TaskMapper.ToDTO(updatedTask);
+            return null;
         }
-        catch (Exception ex)
-        {
-            throw new TaskServiceException($"{nameof(UpdateAsync)} - Error updating task from database", ex);
-        }
+
+        return TaskMapper.ToDTO(updatedTask);
     }
 
-    public async Task<bool> DeleteAsync(string id) =>
-        await _taskRepository.DeleteByIdAsync(id);
+    public async Task<bool> DeleteAsync(string id, CancellationToken cancellationToken) =>
+        await _taskRepository.DeleteByIdAsync(id, cancellationToken);
 }

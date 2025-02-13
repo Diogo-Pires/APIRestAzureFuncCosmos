@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Presentation;
@@ -41,11 +42,12 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
     [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: UtilityConsts.APPJSON, bodyType: typeof(List<TaskDTO>), Description = "Get all the task")]
     [FunctionName(nameof(GetAllTasks))]
     public async Task<IActionResult> GetAllTasks(
-        [HttpTrigger(AuthorizationLevel.Anonymous, UtilityConsts.GET, Route = $"{ROUTE_NAME}s")] HttpRequest req)
+        [HttpTrigger(AuthorizationLevel.Anonymous, UtilityConsts.GET, Route = $"{ROUTE_NAME}s")] HttpRequest req,
+        CancellationToken cancellationToken)
     {
         try
         {
-            var taskList = await _taskService.GetAllAsync();
+            var taskList = await _taskService.GetAllAsync(cancellationToken);
             return new OkObjectResult(JsonConvert.SerializeObject(taskList));
         }
         catch (ArgumentException ex)
@@ -54,7 +56,7 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
         }
         catch (Exception ex)
         {
-            return await _exceptionHandler.HandleExceptionAsync(ex);
+            return _exceptionHandler.HandleException(ex);
         }
     }
 
@@ -79,7 +81,9 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
     [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.NotFound, Description = "Task was not found")]
     [FunctionName(nameof(GetTaskById))]
     public async Task<IActionResult> GetTaskById(
-        [HttpTrigger(AuthorizationLevel.Anonymous, UtilityConsts.GET, Route = $"{ROUTE_NAME}/{{id}}")] HttpRequest req, string id)
+        [HttpTrigger(AuthorizationLevel.Anonymous, UtilityConsts.GET, Route = $"{ROUTE_NAME}/{{id}}")] HttpRequest req, 
+        string id,
+        CancellationToken cancellationToken)
     {
         try
         {
@@ -88,7 +92,7 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
                 return new BadRequestObjectResult(new { Error = UtilityConsts.VALIDATION_ID_NOT_EMPTY });
             }
 
-            var task = await _taskService.GetByIdAsync(id);
+            var task = await _taskService.GetByIdAsync(id, cancellationToken);
             if (task == null)
             {
                 return new NotFoundResult();
@@ -102,7 +106,7 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
         }
         catch (Exception ex)
         {
-            return await _exceptionHandler.HandleExceptionAsync(ex);
+            return _exceptionHandler.HandleException(ex);
         }
     }
 
@@ -131,11 +135,12 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
     [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.BadRequest, Description = "Provided task was wrongly formated")]
     [FunctionName(nameof(CreateTask))]
     public async Task<IActionResult> CreateTask(
-        [HttpTrigger(AuthorizationLevel.Anonymous, UtilityConsts.POST, Route = $"{ROUTE_NAME}")] HttpRequest req)
+        [HttpTrigger(AuthorizationLevel.Anonymous, UtilityConsts.POST, Route = $"{ROUTE_NAME}")] HttpRequest req,
+        CancellationToken cancellationToken)
     {
         try
         {
-            var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            var requestBody = await new StreamReader(req.Body).ReadToEndAsync(cancellationToken);
             var createTaskDto = JsonConvert.DeserializeObject<TaskDTO>(requestBody);
 
             if (createTaskDto == null)
@@ -143,7 +148,7 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
                 return new BadRequestObjectResult(new { Error = UtilityConsts.VALIDATION_INVALID_JSON_REQUEST });
             }
 
-            var createdTask = await _taskService.CreateAsync(createTaskDto);
+            var createdTask = await _taskService.CreateAsync(createTaskDto, cancellationToken);
             if(createdTask.IsFailed)
             {
                 return new BadRequestObjectResult(new { Errors = createdTask.Errors.Select(e => e.Message) });
@@ -162,7 +167,7 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
         }
         catch (Exception ex)
         {
-            return await _exceptionHandler.HandleExceptionAsync(ex);
+            return _exceptionHandler.HandleException(ex);
         }
     }
 
@@ -194,11 +199,12 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
     [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.NotFound, Description = "Task was not found")]
     [FunctionName(nameof(UpdateTask))]
     public async Task<IActionResult> UpdateTask(
-        [HttpTrigger(AuthorizationLevel.Function, UtilityConsts.PUT, Route = $"{ROUTE_NAME}")] HttpRequest req)
+        [HttpTrigger(AuthorizationLevel.Function, UtilityConsts.PUT, Route = $"{ROUTE_NAME}")] HttpRequest req,
+        CancellationToken cancellationToken)
     {
         try
         {
-            var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            var requestBody = await new StreamReader(req.Body).ReadToEndAsync(cancellationToken);
             var updateTaskDto = JsonConvert.DeserializeObject<TaskDTO>(requestBody);
 
             if (updateTaskDto == null)
@@ -211,7 +217,7 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
                 return new BadRequestObjectResult(new { Error = UtilityConsts.VALIDATION_ID_NOT_EMPTY });
             }
 
-            var updatedTask = await _taskService.UpdateAsync(updateTaskDto);
+            var updatedTask = await _taskService.UpdateAsync(updateTaskDto, cancellationToken);
             if (updatedTask == null)
             {
                 return new NotFoundResult();
@@ -225,7 +231,7 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
         }
         catch (Exception ex)
         {
-            return await _exceptionHandler.HandleExceptionAsync(ex);
+            return _exceptionHandler.HandleException(ex);
         }
     }
 
@@ -250,7 +256,9 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
     [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: UtilityConsts.APPJSON, bodyType: typeof(ErrorResponse), Description = "Model for errors")]
     [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.NotFound, Description = "Task was not found")]
     public async Task<IActionResult> DeleteTask(
-        [HttpTrigger(AuthorizationLevel.Function, UtilityConsts.DELETE, Route = $"{ROUTE_NAME}/{{id}}")] HttpRequest req, string id)
+        [HttpTrigger(AuthorizationLevel.Function, UtilityConsts.DELETE, Route = $"{ROUTE_NAME}/{{id}}")] HttpRequest req, 
+        string id,
+        CancellationToken cancellationToken)
     {
         try
         {
@@ -259,7 +267,7 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
                 return new BadRequestObjectResult(new { Error = UtilityConsts.VALIDATION_ID_NOT_EMPTY });
             }
 
-            var deleted = await _taskService.DeleteAsync(id);
+            var deleted = await _taskService.DeleteAsync(id, cancellationToken);
             if (!deleted)
             {
                 return new NotFoundResult();
@@ -273,7 +281,7 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
         }
         catch (Exception ex)
         {
-            return await _exceptionHandler.HandleExceptionAsync(ex);
+            return _exceptionHandler.HandleException(ex);
         }
     }
 }

@@ -2,22 +2,20 @@
 using Microsoft.Extensions.Logging;
 using Presentation.Interfaces;
 using System;
-using System.Threading.Tasks;
 
 namespace Presentation.Exceptions;
 public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
 {
     private readonly ILogger<GlobalExceptionHandler> _logger = logger;
 
-    public Task<IActionResult> HandleExceptionAsync(Exception ex)
+    public IActionResult HandleException(Exception ex)
     {
-        _logger.LogError(ex, "An unhandled exception occurred.");
+        var msg = "An unhandled exception occurred.";
+        _logger.LogError(ex, msg);
 
-        var result = new ObjectResult(new { error = ex.Message })
+        return new ObjectResult(new { error = msg })
         {
             StatusCode = 500
         };
-
-        return Task.FromResult<IActionResult>(result);
     }
 }
