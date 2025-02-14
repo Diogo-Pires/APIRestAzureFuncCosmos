@@ -1,6 +1,7 @@
 ﻿using Application.Interfaces;
 using Application.Services;
 using FluentValidation;
+using Infrastructure.Cache;
 using Infrastructure.Config;
 using Infrastructure.Persistence;
 using Microsoft.Azure.Cosmos;
@@ -38,17 +39,14 @@ public class Startup : FunctionsStartup
         var configuration = builder.GetContext().Configuration;
         var jaggerSettings = configuration.GetSection("Jagger").Get<JaggerSettings>();
 
+        //To start jaeger locally, docker run --rm -d --name jaeger -p 16686:16686 -p 6831:6831/udp jaegertracing/all-in-one:latest
         builder.Services.AddOpenTelemetry()
                 .WithTracing(tracing => tracing
                     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(UtilityConsts.APP_NAME))
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
                     .AddSource(UtilityConsts.APP_NAME)
-                    .AddJaegerExporter(opts =>
-                    {
-                        opts.AgentHost = jaggerSettings.AgentHost;
-                        opts.AgentPort = jaggerSettings.AgentPort;
-                    })
+                    .AddOtlpExporter()
                 )
                 .WithMetrics(metrics => metrics
                     .AddMeter(UtilityConsts.APP_NAME)
@@ -59,6 +57,14 @@ public class Startup : FunctionsStartup
 
         var cosmosSettings = configuration.GetSection("CosmosDb").Get<CosmosDbSettings>();
 
+        //To start redis locally, docker run --name redis -p 6379:6379 -d redis
+        builder.Services.AddStackExchangeRedisCache(options =>
+        {
+            options.Configuration = "localhost:6379"; // Ou sua connection string no Azure
+            options.InstanceName = UtilityConsts.APP_NAME;
+        });
+
+        builder.Services.AddSingleton<IHybridCacheService, HybridCacheService>();
         builder.Services.AddSingleton<IExceptionHandler, GlobalExceptionHandler>();
         builder.Services.AddSingleton(x => new CosmosClient(cosmosSettings.Endpoint, cosmosSettings.Key));
         builder.Services.AddSingleton(x => cosmosSettings);
