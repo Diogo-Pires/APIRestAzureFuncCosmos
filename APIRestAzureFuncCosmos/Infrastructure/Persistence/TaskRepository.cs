@@ -18,16 +18,16 @@ public class TaskRepository : ITaskRepository
         _container = _cosmosClient.GetContainer(cosmosDbSettings.DatabaseName, cosmosDbSettings.ContainerName);
     }
 
-    public async Task<List<TaskItem>> GetAllAsync()
+    public async Task<List<TaskItem>> GetAllAsync(CancellationToken cancellationToken)
     {
         List<TaskItem> taskList = [];
-        using (FeedIterator<TaskItem> setIterator = 
+        using (FeedIterator<TaskItem> setIterator =
                 _container.GetItemLinqQueryable<TaskItem>()
                     .ToFeedIterator())
         {
             while (setIterator.HasMoreResults)
             {
-                foreach (var item in await setIterator.ReadNextAsync())
+                foreach (var item in await setIterator.ReadNextAsync(cancellationToken))
                 {
                     taskList.Add(item);
                 }
@@ -37,11 +37,11 @@ public class TaskRepository : ITaskRepository
         return taskList;
     }
 
-    public async Task<TaskItem?> GetByIdAsync(string id)
+    public async Task<TaskItem?> GetByIdAsync(string id, CancellationToken cancellationToken)
     {
         try
         {
-            return await _container.ReadItemAsync<TaskItem>(id, new PartitionKey(id));
+            return await _container.ReadItemAsync<TaskItem>(id, new PartitionKey(id), cancellationToken: cancellationToken);
         }
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
@@ -49,20 +49,20 @@ public class TaskRepository : ITaskRepository
         }
     }
 
-    public async Task<TaskItem> AddAsync(TaskItem task) =>
+    public async Task<TaskItem> AddAsync(TaskItem task, CancellationToken cancellationToken) =>
         await _container.CreateItemAsync(task, new PartitionKey(task.Id));
 
-    public async Task<TaskItem?> UpdateAsync(TaskItem task)
+    public async Task<TaskItem?> UpdateAsync(TaskItem task, CancellationToken cancellationToken)
     {
-        var response = await _container.UpsertItemAsync(task, new PartitionKey(task.Id));
+        var response = await _container.UpsertItemAsync(task, new PartitionKey(task.Id), cancellationToken: cancellationToken);
         return response.StatusCode == HttpStatusCode.OK ? task : null;
     }
 
-    public async Task<bool> DeleteByIdAsync(string id)
+    public async Task<bool> DeleteByIdAsync(string id, CancellationToken cancellationToken)
     {
         try
         {
-            var response = await _container.DeleteItemAsync<TaskItem>(id, new PartitionKey(id));
+            var response = await _container.DeleteItemAsync<TaskItem>(id, new PartitionKey(id), cancellationToken: cancellationToken);
             return response.StatusCode == HttpStatusCode.NoContent;
         }
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
@@ -70,4 +70,4 @@ public class TaskRepository : ITaskRepository
             return false;
         }
     }
-}   
+}

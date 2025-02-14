@@ -1,5 +1,5 @@
 {
-    "IsEncrypted": false,
+  "IsEncrypted": false,
   "Values": {
     "AzureWebJobsStorage": "",
     "FUNCTIONS_INPROC_NET8_ENABLED": "1",
@@ -7,6 +7,8 @@
     "CosmosDb:Endpoint": "https://localhost:8081/",
     "CosmosDb:Key": "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==",
     "CosmosDb:DatabaseName": "TasksDB",
-    "CosmosDb:ContainerName": "TasksContainer"
+    "CosmosDb:ContainerName": "TasksContainer",
+    "Jagger:AgentHost": "localhost",
+    "Jagger:AgentPort": 16686
   }
 }
