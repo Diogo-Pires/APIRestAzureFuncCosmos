@@ -39,13 +39,14 @@ public class Startup : FunctionsStartup
         var configuration = builder.GetContext().Configuration;
         var jaggerSettings = configuration.GetSection("Jagger").Get<JaggerSettings>();
 
-        //To start jaeger locally, docker run --rm -d --name jaeger -p 16686:16686 -p 6831:6831/udp jaegertracing/all-in-one:latest
+        //To start jaeger locally, docker run --rm -d --name jaeger -p 16686:16686 -p 4317:4317 -p 4318:4318 -p 6831:6831/udp jaegertracing/all-in-one:latest
         builder.Services.AddOpenTelemetry()
                 .WithTracing(tracing => tracing
                     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(UtilityConsts.APP_NAME))
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
                     .AddSource(UtilityConsts.APP_NAME)
+                    .AddConsoleExporter()
                     .AddOtlpExporter()
                 )
                 .WithMetrics(metrics => metrics
