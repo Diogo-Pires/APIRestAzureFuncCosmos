@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Caching.Distributed;
-using System.Text.Json;
 using Application.Interfaces;
+using Newtonsoft.Json;
 
 namespace Infrastructure.Cache;
 
@@ -23,7 +23,7 @@ public class HybridCacheService(IMemoryCache memoryCache, IDistributedCache dist
         var redisData = await _distributedCache.GetStringAsync(key);
         if (redisData != null)
         {
-            cachedValue = JsonSerializer.Deserialize<T>(redisData);
+            cachedValue = JsonConvert.DeserializeObject<T>(redisData);
             _memoryCache.Set(key, cachedValue, _cacheDuration);
 
             return cachedValue;
@@ -33,7 +33,7 @@ public class HybridCacheService(IMemoryCache memoryCache, IDistributedCache dist
         cachedValue = await fetchFromDb();
         if (cachedValue != null)
         {
-            var serializedData = JsonSerializer.Serialize(cachedValue);
+            var serializedData = JsonConvert.SerializeObject(cachedValue);
             await _distributedCache.SetStringAsync(key, serializedData, new DistributedCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = _cacheDuration

@@ -1,20 +1,24 @@
 ﻿using Application.DTOs;
-using Application.Exceptions;
 using Application.Interfaces;
 using Application.Mappers;
 using Domain.Entities;
 using FluentResults;
 using FluentValidation;
+using Shared.Consts;
+using Shared.Exceptions;
 
 namespace Application.Services;
 
 public class TaskService(ITaskRepository taskRepository,
                          IValidator<TaskDTO> createValidator,
+                         IValidator<TaskItem> updateValidator,
                          IHybridCacheService hybridCacheService) : ITaskService
 {
     private readonly ITaskRepository _taskRepository = taskRepository;
     private readonly IHybridCacheService _cacheService = hybridCacheService;
     private readonly IValidator<TaskDTO> _createValidator = createValidator;
+    private readonly IValidator<TaskItem> _updateValidator = updateValidator;    
+
     private const string _BASE_CACHEKEY = "task:";
     private const string _BASE_CACHEKEY_ALL = "all";
 
@@ -29,7 +33,7 @@ public class TaskService(ITaskRepository taskRepository,
             ) ?? [];
     }
 
-    public async Task<TaskDTO?> GetByIdAsync(string id, CancellationToken cancellationToken)
+    public async Task<TaskDTO?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         var cachekey = $"{_BASE_CACHEKEY}{id}";
 
@@ -63,31 +67,37 @@ public class TaskService(ITaskRepository taskRepository,
         return Result.Ok(TaskMapper.ToDTO(createdTask));
     }
 
-    public async Task<TaskDTO?> UpdateAsync(TaskDTO updateTaskDto, CancellationToken cancellationToken)
+    public async Task<Result<TaskDTO?>> UpdateAsync(TaskDTO updateTaskDto, CancellationToken cancellationToken)
     {
-        TaskItem? existingTask = null;
+        var existingTask = await _taskRepository.GetByIdAsync(updateTaskDto.Id, cancellationToken);
+        if (existingTask == null)
+        {
+            return Result.Fail(new Error(UtilityConsts.VALIDATION_TASK_NOT_FOUND));
+        }
 
         try
         {
-            existingTask = await _taskRepository.GetByIdAsync(updateTaskDto.Id, cancellationToken);
-            if (existingTask == null)
-            {
-                return null;
-            }
+            existingTask.UpdateTask(updateTaskDto.Title,
+                                    updateTaskDto.Description,
+                                    updateTaskDto.Deadline,
+                                    updateTaskDto.Status);
         }
-        catch (Exception ex)
+        catch (DomainException ex)
         {
-            throw new TaskServiceException($"{nameof(UpdateAsync)} - Error fetching task from database", ex);
+            return Result.Fail(new Error(ex.Message));
         }
-        
-        existingTask.Title = updateTaskDto.Title;
-        existingTask.Description = updateTaskDto.Description;
-        existingTask.IsCompleted = updateTaskDto.IsCompleted;
+
+        var validationResult = await _updateValidator.ValidateAsync(existingTask, cancellationToken);
+        if (!validationResult.IsValid)
+        {
+            var errors = validationResult.Errors.Select(e => e.ErrorMessage);
+            return Result.Fail(errors);
+        }
 
         var updatedTask = await _taskRepository.UpdateAsync(existingTask, cancellationToken);
         if (updatedTask == null)
         {
-            return null;
+            return Result.Fail(new Error(UtilityConsts.VALIDATION_TASK_NOT_FOUND));
         }
 
         await _cacheService.RemoveAsync($"{_BASE_CACHEKEY}{updatedTask.Id}");
@@ -96,7 +106,7 @@ public class TaskService(ITaskRepository taskRepository,
         return TaskMapper.ToDTO(updatedTask);
     }
 
-    public async Task<bool> DeleteAsync(string id, CancellationToken cancellationToken)
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken)
     {
         await _cacheService.RemoveAsync($"{_BASE_CACHEKEY}{id}");
         await ClearAllRequestFromCache();
