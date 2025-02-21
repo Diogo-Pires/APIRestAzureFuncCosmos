@@ -48,7 +48,7 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
         try
         {
             var taskList = await _taskService.GetAllAsync(cancellationToken);
-            return new OkObjectResult(JsonConvert.SerializeObject(taskList));
+            return new OkObjectResult(taskList);
         }
         catch (ArgumentException ex)
         {
@@ -75,19 +75,19 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
     /// <response code="200">Ok</response>
     /// <response code="404">Not Found</response>
     [OpenApiOperation(operationId: nameof(GetTaskById), tags: [ROUTE_NAME])]
-    [OpenApiParameter(name: nameof(id), In = ParameterLocation.Path, Required = true, Type = typeof(string), Description = "Task's id")]
+    [OpenApiParameter(name: nameof(id), In = ParameterLocation.Path, Required = true, Type = typeof(Guid), Description = "Task's id")]
     [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: UtilityConsts.APPJSON, bodyType: typeof(TaskDTO), Description = "Get a task by id")]
     [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: UtilityConsts.APPJSON, bodyType: typeof(ErrorResponse), Description = "Model for errors")]
     [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.NotFound, Description = "Task was not found")]
     [FunctionName(nameof(GetTaskById))]
     public async Task<IActionResult> GetTaskById(
         [HttpTrigger(AuthorizationLevel.Anonymous, UtilityConsts.GET, Route = $"{ROUTE_NAME}/{{id}}")] HttpRequest req, 
-        string id,
+        Guid id,
         CancellationToken cancellationToken)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (id == Guid.Empty)
             {
                 return new BadRequestObjectResult(new { Error = UtilityConsts.VALIDATION_ID_NOT_EMPTY });
             }
@@ -212,18 +212,18 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
                 return new BadRequestObjectResult(new { Error = UtilityConsts.VALIDATION_INVALID_JSON_REQUEST });
             }
 
-            if (string.IsNullOrWhiteSpace(updateTaskDto.Id))
+            if (updateTaskDto.Id == Guid.Empty)
             {
                 return new BadRequestObjectResult(new { Error = UtilityConsts.VALIDATION_ID_NOT_EMPTY });
             }
 
             var updatedTask = await _taskService.UpdateAsync(updateTaskDto, cancellationToken);
-            if (updatedTask == null)
+            if (updatedTask.IsFailed)
             {
-                return new NotFoundResult();
+                return new BadRequestObjectResult(new { Errors = updatedTask.Errors.Select(e => e.Message) });
             }
 
-            return new OkObjectResult(updatedTask);
+            return new OkObjectResult(updatedTask.Value);
         }
         catch (ArgumentException ex)
         {
@@ -251,18 +251,18 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
     /// <response code="404">Not Found</response>
     [FunctionName(nameof(DeleteTask))]
     [OpenApiOperation(operationId: nameof(DeleteTask), tags: [ROUTE_NAME])]
-    [OpenApiParameter(name: nameof(req), In = ParameterLocation.Path, Required = true, Type = typeof(string), Description = "The id of the task to be delete")]
+    [OpenApiParameter(name: nameof(req), In = ParameterLocation.Path, Required = true, Type = typeof(Guid), Description = "The id of the task to be delete")]
     [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.NoContent, Description = "Deletes a task")]
     [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: UtilityConsts.APPJSON, bodyType: typeof(ErrorResponse), Description = "Model for errors")]
     [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.NotFound, Description = "Task was not found")]
     public async Task<IActionResult> DeleteTask(
         [HttpTrigger(AuthorizationLevel.Function, UtilityConsts.DELETE, Route = $"{ROUTE_NAME}/{{id}}")] HttpRequest req, 
-        string id,
+        Guid id,
         CancellationToken cancellationToken)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (id == Guid.Empty)
             {
                 return new BadRequestObjectResult(new { Error = UtilityConsts.VALIDATION_ID_NOT_EMPTY });
             }

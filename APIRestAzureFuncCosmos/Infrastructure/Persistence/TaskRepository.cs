@@ -37,11 +37,12 @@ public class TaskRepository : ITaskRepository
         return taskList;
     }
 
-    public async Task<TaskItem?> GetByIdAsync(string id, CancellationToken cancellationToken)
+    public async Task<TaskItem?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         try
         {
-            return await _container.ReadItemAsync<TaskItem>(id, new PartitionKey(id), cancellationToken: cancellationToken);
+            var idString = id.ToString();
+            return await _container.ReadItemAsync<TaskItem>(idString, new PartitionKey(idString), cancellationToken: cancellationToken);
         }
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
@@ -50,19 +51,20 @@ public class TaskRepository : ITaskRepository
     }
 
     public async Task<TaskItem> AddAsync(TaskItem task, CancellationToken cancellationToken) =>
-        await _container.CreateItemAsync(task, new PartitionKey(task.Id));
+        await _container.CreateItemAsync(task, new PartitionKey(task.Id.ToString()), cancellationToken: cancellationToken);
 
     public async Task<TaskItem?> UpdateAsync(TaskItem task, CancellationToken cancellationToken)
     {
-        var response = await _container.UpsertItemAsync(task, new PartitionKey(task.Id), cancellationToken: cancellationToken);
+        var response = await _container.UpsertItemAsync(task, new PartitionKey(task.Id.ToString()), cancellationToken: cancellationToken);
         return response.StatusCode == HttpStatusCode.OK ? task : null;
     }
 
-    public async Task<bool> DeleteByIdAsync(string id, CancellationToken cancellationToken)
+    public async Task<bool> DeleteByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         try
         {
-            var response = await _container.DeleteItemAsync<TaskItem>(id, new PartitionKey(id), cancellationToken: cancellationToken);
+            var idString = id.ToString();
+            var response = await _container.DeleteItemAsync<TaskItem>(idString, new PartitionKey(idString), cancellationToken: cancellationToken);
             return response.StatusCode == HttpStatusCode.NoContent;
         }
         catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
