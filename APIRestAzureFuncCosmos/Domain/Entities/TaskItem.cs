@@ -31,10 +31,20 @@ public class TaskItem
     [JsonProperty("deadline")]
     public DateTime? Deadline { get; private set; }
 
+    [JsonProperty("assignedUserEmail")]
+    public string? AssignedUserEmail { get; private set; }
+
     [JsonIgnore]
     public ITaskState State => TaskStateManager.GetState(Status);
 
-    public TaskItem(string title, string description, DateTime? deadline, TaskItemStatus? taskItemStatus)
+    [JsonIgnore]
+    public User? AssignedUser { get; private set; }
+
+    public TaskItem(string title,
+                    string description,
+                    DateTime? deadline,
+                    TaskItemStatus? taskItemStatus,
+                    User? assignedUser)
     {
         Id = Guid.NewGuid();
         Title = title;
@@ -42,6 +52,7 @@ public class TaskItem
         CreatedAt = DateTime.UtcNow;
         Deadline = new Deadline(deadline, CreatedAt)?.Value;
         Status = taskItemStatus ?? TaskItemStatus.Pending;
+        AssignedUser = assignedUser;
     }
 
     public void SetCompletedAt(DateTime dateTime) => CompletedAt = dateTime;
@@ -67,10 +78,10 @@ public class TaskItem
     public void UpdateTask(string title, string description, DateTime? deadline, TaskItemStatus? newTaskItemStatus)
     {
         if (title != null && title != Title)
-            Title = title;
+            Title = title.Trim();
 
         if (description != null && description != Description)
-            Description = description;
+            Description = description.Trim();
 
         if (deadline.HasValue && deadline != Deadline)
             Deadline = deadline;
@@ -90,5 +101,11 @@ public class TaskItem
         {
             TaskStateManager.ApplyStateTransition(this, (TaskItemStatus)newTaskItemStatus, State, Status);
         }
+    }
+
+    public void AssignToUser(User user)
+    {
+        AssignedUserEmail = user.Id;
+        AssignedUser = user;
     }
 }

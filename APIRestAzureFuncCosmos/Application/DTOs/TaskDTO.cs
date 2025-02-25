@@ -11,8 +11,16 @@ public record TaskDTO
     public DateTime CreatedAt { get; init; }
     public DateTime? CompletedAt { get; init; }
     public DateTime? Deadline { get; init; }
+    public UserDTO? User { get; init; }
 
-    public TaskDTO(Guid id, string title, string description, TaskItemStatus? status, DateTime createdAt, DateTime? completedAt, DateTime? deadline)
+    public TaskDTO(Guid id,
+                   string title,
+                   string description,
+                   TaskItemStatus? status,
+                   DateTime createdAt,
+                   DateTime? completedAt,
+                   DateTime? deadline,
+                   UserDTO? userDTO)
     {
         Id = id;
         Title = title;
@@ -21,5 +29,6 @@ public record TaskDTO
         CreatedAt = createdAt;
         CompletedAt = completedAt;
         Deadline = deadline;
+        User = userDTO;
     }
 }
