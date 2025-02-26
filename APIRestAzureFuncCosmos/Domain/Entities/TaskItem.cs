@@ -4,7 +4,9 @@ using Domain.Interfaces;
 using Domain.States;
 using Domain.ValueObjects;
 using Newtonsoft.Json;
+using Shared;
 using Shared.Exceptions;
+using Shared.Interfaces;
 
 namespace Domain.Entities;
 
@@ -44,21 +46,24 @@ public class TaskItem
                     string description,
                     DateTime? deadline,
                     TaskItemStatus? taskItemStatus,
-                    User? assignedUser)
+                    User? assignedUser,
+                    IDateTimeProvider? dateTimeProvider)
     {
         Id = Guid.NewGuid();
         Title = title;
         Description = description;
-        CreatedAt = DateTime.UtcNow;
-        Deadline = new Deadline(deadline, CreatedAt)?.Value;
+        CreatedAt = dateTimeProvider != null ? dateTimeProvider.GetUTCNow() : new DateTimeProvider().GetUTCNow();
+        Deadline = new Deadline(deadline, CreatedAt, dateTimeProvider)?.Value;
         Status = taskItemStatus ?? TaskItemStatus.Pending;
         AssignedUser = assignedUser;
     }
 
     public void SetCompletedAt(DateTime dateTime) => CompletedAt = dateTime;
 
-    public static void ValidateCreation(string title, string description, DateTime? deadline)
+    public static void ValidateCreation(string title, string description, DateTime? deadline, IDateTimeProvider? dateTimeProvider = null)
     {
+        dateTimeProvider ??= new DateTimeProvider();
+
         if (string.IsNullOrWhiteSpace(title))
             throw new DomainException(Constants.VALIDATION_TASK_TITLE_NOT_EMPTY);
 
@@ -68,12 +73,12 @@ public class TaskItem
         if (string.IsNullOrWhiteSpace(description))
             throw new DomainException(Constants.VALIDATION_TASK_DESCRIPTION_NOT_EMPTY);
 
-        if (deadline.HasValue && deadline.Value < DateTime.UtcNow)
+        if (deadline.HasValue && deadline.Value < dateTimeProvider.GetUTCNow())
             throw new DomainException(Constants.VALIDATION_TASK_DEADLINE_NOT_PAST);
     }
 
-    public void ValidateUpdate() =>
-        ValidateCreation(Title, Description, Deadline);
+    public void ValidateUpdate(IDateTimeProvider? dateTimeProvider = null) =>
+        ValidateCreation(Title, Description, Deadline, dateTimeProvider);
 
     public void UpdateTask(string title, string description, DateTime? deadline, TaskItemStatus? newTaskItemStatus)
     {

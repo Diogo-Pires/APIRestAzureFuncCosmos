@@ -2,20 +2,12 @@
 
 namespace Domain.Entities;
 
-public class User
+public class User(string name, string email)
 {
     [JsonProperty("id")]
-    public string Id { get; private set; }
+    public string Id { get; private set; } = email;
 
 
     [JsonProperty("name")]
-    public string Name { get; private set; }
-
-    private User() { }
-
-    public User(string name, string email)
-    {
-        Id = email;
-        Name = name;
-    }
+    public string Name { get; private set; } = name;
 }

@@ -16,7 +16,9 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Presentation.Exceptions;
 using Presentation.Interfaces;
+using Shared;
 using Shared.Consts;
+using Shared.Interfaces;
 
 [assembly: FunctionsStartup(typeof(Presentation.Startup))]
 namespace Presentation;
@@ -68,6 +70,7 @@ public class Startup : FunctionsStartup
         builder.Services.AddSingleton<IExceptionHandler, GlobalExceptionHandler>();
         builder.Services.AddSingleton(x => new CosmosClient(cosmosSettings.Endpoint, cosmosSettings.Key));
         builder.Services.AddSingleton(x => cosmosSettings);
+        builder.Services.AddTransient<IDateTimeProvider, DateTimeProvider>();
         builder.Services.AddTransient<ITaskRepository, TaskRepository>();
         builder.Services.AddTransient<IUserRepository, UserRepository>();
         builder.Services.AddTransient<ITaskService, TaskService>();

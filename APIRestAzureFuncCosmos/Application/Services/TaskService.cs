@@ -6,6 +6,7 @@ using FluentResults;
 using FluentValidation;
 using Shared.Consts;
 using Shared.Exceptions;
+using Shared.Interfaces;
 
 namespace Application.Services;
 
@@ -13,13 +14,15 @@ public class TaskService(ITaskRepository taskRepository,
                          IUserRepository userRepository,
                          IValidator<TaskDTO> createValidator,
                          IValidator<TaskItem> updateValidator,
-                         IHybridCacheService hybridCacheService) : BaseHybridCacheService, ITaskService
+                         IHybridCacheService hybridCacheService,
+                         IDateTimeProvider dateTimeProvider) : BaseHybridCacheService, ITaskService
 {
     private readonly ITaskRepository _taskRepository = taskRepository;
     private readonly IUserRepository _userRepository = userRepository;
     private readonly IHybridCacheService _cacheService = hybridCacheService;
     private readonly IValidator<TaskDTO> _createValidator = createValidator;
     private readonly IValidator<TaskItem> _updateValidator = updateValidator;    
+    private readonly IDateTimeProvider _dateTimeProvider = dateTimeProvider;
 
     protected override string CacheKey { get => "task:"; }
 
@@ -50,7 +53,8 @@ public class TaskService(ITaskRepository taskRepository,
         return TaskMapper.ToDTO(task);
     }
 
-    public async Task<Result<TaskDTO>> CreateAsync(TaskDTO createTaskDto, CancellationToken cancellationToken)
+    public async Task<Result<TaskDTO>> CreateAsync(TaskDTO createTaskDto,
+                                                   CancellationToken cancellationToken)
     {
         var validationResult = await _createValidator.ValidateAsync(createTaskDto, cancellationToken);
         if (!validationResult.IsValid)
@@ -59,7 +63,7 @@ public class TaskService(ITaskRepository taskRepository,
             return Result.Fail(errors);
         }
 
-        var taskEntity = TaskMapper.ToEntity(createTaskDto);
+        var taskEntity = TaskMapper.ToEntity(createTaskDto, _dateTimeProvider);
         var createdTask = await _taskRepository.AddAsync(taskEntity, cancellationToken);
         
         await ClearAllRequestFromCacheAsync(_cacheService);
