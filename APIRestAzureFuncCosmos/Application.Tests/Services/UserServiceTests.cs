@@ -5,7 +5,6 @@ using Application.Services;
 using Domain.Entities;
 using FluentValidation;
 using Moq;
-using System.Threading.Tasks;
 
 namespace Application.Tests.Services;
 
@@ -28,9 +27,10 @@ public class UserServiceTests
     public async Task GetAllAsync_ShouldReturnUsersFromCacheOrRepository()
     {
         // Arrange
-        var users = new List<UserDTO> { new UserDTO("Test User", "test@example.com") };
+        var email = "test@example.com";
+        var users = new List<UserDTO> { new("Test User", email) };
         _cacheServiceMock
-            .Setup(c => c.GetOrSetAsync(It.IsAny<string>(), It.IsAny<Func<Task<List<UserDTO>>>>()))
+            .Setup(c => c.GetOrSetAsync(It.IsAny<string>(), It.IsAny<Func<Task<List<UserDTO>?>>>()))
             .ReturnsAsync(users);
 
         // Act
@@ -39,24 +39,25 @@ public class UserServiceTests
         // Assert
         Assert.NotNull(result);
         Assert.Single(result);
-        Assert.Equal("test@example.com", result.First().Id);
+        Assert.Equal(email, result.First().Id);
     }
 
     [Fact]
     public async Task GetByEmailAsync_ShouldReturnUserFromCacheOrRepository()
     {
         // Arrange
-        var user = new User("Test User","test@example.com" );
+        var email = "test@example.com";
+        var user = new User("Test User", email);
         _cacheServiceMock
             .Setup(c => c.GetOrSetAsync(It.IsAny<string>(), It.IsAny<Func<Task<User?>>>()))
-        .ReturnsAsync(user);
+            .ReturnsAsync(user);
 
         // Act
-        var result = await _userService.GetByEmailAsync("test@example.com", CancellationToken.None);
+        var result = await _userService.GetByEmailAsync(email, CancellationToken.None);
 
         // Assert
         Assert.NotNull(result);
-        Assert.Equal("test@example.com", result.Id);
+        Assert.Equal(email, result.Id);
     }
 
     [Fact]

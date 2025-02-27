@@ -62,7 +62,7 @@ public class TaskServiceTests
     public async Task CreateAsync_ShouldReturnFailure_WhenValidationFails()
     {
         var dateTime = DateTime.UtcNow;
-        var taskDto = new TaskDTO(Guid.NewGuid(), null, null, TaskItemStatus.Pending, dateTime, dateTime, dateTime, null);
+        var taskDto = new TaskDTO(Guid.NewGuid(), string.Empty, string.Empty, TaskItemStatus.Pending, dateTime, dateTime, dateTime, null);
         var validationResult = new FluentValidation.Results.ValidationResult(new List<FluentValidation.Results.ValidationFailure>
         {
             new("Title", "Title cannot be empty"),
@@ -90,14 +90,14 @@ public class TaskServiceTests
 
         var dateTime = datetime.AddDays(1);
         var taskId = Guid.NewGuid();
-        var taskDto = new TaskItem("Test Task", "Description", dateTime, TaskItemStatus.Pending, null, _dateTimeProviderMock.Object);
+        var entity = new TaskItem("Test Task", "Description", dateTime, TaskItemStatus.Pending, null, _dateTimeProviderMock.Object);
         
-        _cacheServiceMock.Setup(cache => cache.GetOrSetAsync(It.IsAny<string>(), It.IsAny<Func<Task<TaskItem>>>()))
-            .ReturnsAsync(taskDto);
+        _cacheServiceMock.Setup(cache => cache.GetOrSetAsync(It.IsAny<string>(), It.IsAny<Func<Task<TaskItem?>>>()))
+            .ReturnsAsync(entity);
 
         _taskRepositoryMock
             .Setup(repo => repo.GetByIdAsync(taskId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(taskDto);
+            .ReturnsAsync(entity);
 
         var result = await _taskService.GetByIdAsync(taskId, CancellationToken.None);
 
