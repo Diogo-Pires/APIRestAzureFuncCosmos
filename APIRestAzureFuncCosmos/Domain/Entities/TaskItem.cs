@@ -47,13 +47,15 @@ public class TaskItem
                     DateTime? deadline,
                     TaskItemStatus? taskItemStatus,
                     User? assignedUser,
-                    IDateTimeProvider? dateTimeProvider)
+                    IDateTimeProvider dateTimeProvider)
     {
+        var deadlineObj = new Deadline(deadline, CreatedAt, dateTimeProvider);
+        
         Id = Guid.NewGuid();
         Title = title;
         Description = description;
         CreatedAt = dateTimeProvider != null ? dateTimeProvider.GetUTCNow() : new DateTimeProvider().GetUTCNow();
-        Deadline = new Deadline(deadline, CreatedAt, dateTimeProvider)?.Value;
+        Deadline = deadlineObj.Value;
         Status = taskItemStatus ?? TaskItemStatus.Pending;
         AssignedUser = assignedUser;
     }
