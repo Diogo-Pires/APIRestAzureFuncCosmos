@@ -3,6 +3,7 @@ using Domain.Entities;
 using Domain.Enums;
 using Domain.Interfaces;
 using Shared.Exceptions;
+using Shared.Interfaces;
 
 namespace Domain.States;
 
@@ -18,7 +19,7 @@ public class CancelledState : ITaskState
         throw new DomainException(Constants.VALIDATION_TASK_CANNOT_START_CANCELLED);
     }
 
-    public void Complete(TaskItem task)
+    public void Complete(TaskItem task, IDateTimeProvider? dateTimeProvider = null)
     {
         throw new DomainException(Constants.VALIDATION_TASK_CANNOT_COMPLETE_CANCELLED);
     }

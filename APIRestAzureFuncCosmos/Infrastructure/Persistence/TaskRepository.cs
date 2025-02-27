@@ -15,7 +15,7 @@ public class TaskRepository : ITaskRepository
     public TaskRepository(CosmosClient cosmosClient, CosmosDbSettings cosmosDbSettings)
     {
         _cosmosClient = cosmosClient;
-        _container = _cosmosClient.GetContainer(cosmosDbSettings.DatabaseName, cosmosDbSettings.ContainerName);
+        _container = _cosmosClient.GetContainer(cosmosDbSettings.DatabaseName, cosmosDbSettings.TaskContainerName);
     }
 
     public async Task<List<TaskItem>> GetAllAsync(CancellationToken cancellationToken)

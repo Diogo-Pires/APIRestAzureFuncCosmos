@@ -17,4 +17,7 @@ public struct Constants
     public const string VALIDATION_TASK_MUST_BE_STARTED = "Task cannot be completed before being started.";
     public const string VALIDATION_TASK_INVALID_STATUS = "Invalid task status.";
     public const string VALIDATION_TASK_INVALID_STATUS_TRANSITION = "Invalid status transition.";
+    public const string VALIDATION_USER_NAME_NOT_EMPTY = "User's name cannot be empty.";
+    public const string VALIDATION_USER_EMAIL_NOT_EMPTY = "User's email cannot be empty.";
+    public const string VALIDATION_USER_EMAIL_NOT_VALID = "User's email is not valid.";
 }

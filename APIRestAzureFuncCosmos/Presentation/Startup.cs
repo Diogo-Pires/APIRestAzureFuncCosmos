@@ -16,7 +16,9 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Presentation.Exceptions;
 using Presentation.Interfaces;
+using Shared;
 using Shared.Consts;
+using Shared.Interfaces;
 
 [assembly: FunctionsStartup(typeof(Presentation.Startup))]
 namespace Presentation;
@@ -25,35 +27,35 @@ public class Startup : FunctionsStartup
 {
     public override void Configure(IFunctionsHostBuilder builder)
     {
-        builder.Services.AddLogging(logging =>
-        {
-            logging.AddOpenTelemetry(options =>
-            {
-                options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(UtilityConsts.APP_NAME));
-                options.IncludeFormattedMessage = true;
-                options.IncludeScopes = true;
-                options.AddConsoleExporter();
-            });
-        });
+        //builder.Services.AddLogging(logging =>
+        //{
+        //    logging.AddOpenTelemetry(options =>
+        //    {
+        //        options.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(UtilityConsts.APP_NAME));
+        //        options.IncludeFormattedMessage = true;
+        //        options.IncludeScopes = true;
+        //        options.AddConsoleExporter();
+        //    });
+        //});
 
         var configuration = builder.GetContext().Configuration;
 
-        //To start jaeger locally, docker run --name jaeger -p 16686:16686 -p 4317:4317 -p 4318:4318 -p 6831:6831/udp jaegertracing/all-in-one:latest
-        builder.Services.AddOpenTelemetry()
-                .WithTracing(tracing => tracing
-                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(UtilityConsts.APP_NAME))
-                    .AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation()
-                    .AddSource(UtilityConsts.APP_NAME)
-                    .AddConsoleExporter()
-                    .AddOtlpExporter()
-                )
-                .WithMetrics(metrics => metrics
-                    .AddMeter(UtilityConsts.APP_NAME)
-                    .AddAspNetCoreInstrumentation()
-                    .AddHttpClientInstrumentation()
-                    .AddConsoleExporter()
-                );
+        ////To start jaeger locally, docker run --name jaeger -p 16686:16686 -p 4317:4317 -p 4318:4318 -p 6831:6831/udp jaegertracing/all-in-one:latest
+        //builder.Services.AddOpenTelemetry()
+        //        .WithTracing(tracing => tracing
+        //            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(UtilityConsts.APP_NAME))
+        //            .AddAspNetCoreInstrumentation()
+        //            .AddHttpClientInstrumentation()
+        //            .AddSource(UtilityConsts.APP_NAME)
+        //            .AddConsoleExporter()
+        //            .AddOtlpExporter()
+        //        )
+        //        .WithMetrics(metrics => metrics
+        //            .AddMeter(UtilityConsts.APP_NAME)
+        //            .AddAspNetCoreInstrumentation()
+        //            .AddHttpClientInstrumentation()
+        //            .AddConsoleExporter()
+        //        );
 
         var cosmosSettings = configuration.GetSection("CosmosDb").Get<CosmosDbSettings>();
 
@@ -68,10 +70,14 @@ public class Startup : FunctionsStartup
         builder.Services.AddSingleton<IExceptionHandler, GlobalExceptionHandler>();
         builder.Services.AddSingleton(x => new CosmosClient(cosmosSettings.Endpoint, cosmosSettings.Key));
         builder.Services.AddSingleton(x => cosmosSettings);
+        builder.Services.AddTransient<IDateTimeProvider, DateTimeProvider>();
         builder.Services.AddTransient<ITaskRepository, TaskRepository>();
+        builder.Services.AddTransient<IUserRepository, UserRepository>();
         builder.Services.AddTransient<ITaskService, TaskService>();
+        builder.Services.AddTransient<IUserService, UserService>();
 
         builder.Services.AddValidatorsFromAssemblyContaining<CreateTaskValidator>();
         builder.Services.AddValidatorsFromAssemblyContaining<UpdateTaskValidator>();
+        builder.Services.AddValidatorsFromAssemblyContaining<CreateUserValidator>();
     }
 }

@@ -1,15 +1,23 @@
 ﻿using Domain.Consts;
+using Shared;
 using Shared.Exceptions;
+using Shared.Interfaces;
 
 namespace Domain.ValueObjects;
 
 public class Deadline
 {
+    public Deadline()
+    {
+    }
+
     public DateTime? Value { get; }
 
-    public Deadline(DateTime? deadlineDate, DateTime createdDate)
+    public Deadline(DateTime? deadlineDate, DateTime createdDate, IDateTimeProvider dateTimeProvider)
     {
-        if (deadlineDate.HasValue && deadlineDate.Value < DateTime.UtcNow)
+        dateTimeProvider ??= new DateTimeProvider();
+
+        if (deadlineDate.HasValue && deadlineDate.Value < dateTimeProvider.GetUTCNow())
             throw new DomainException(Constants.VALIDATION_TASK_DEADLINE_NOT_PAST);
 
         if (deadlineDate.HasValue && deadlineDate.Value < createdDate)

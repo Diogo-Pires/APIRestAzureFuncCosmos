@@ -38,8 +38,9 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
     /// Accept: application/json
     /// </remarks>
     /// <response code="200">Ok</response>
+    /// <response code="400">Bad Request</response>
     [OpenApiOperation(operationId: nameof(GetAllTasks), tags: [ROUTE_NAME])]
-    [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: UtilityConsts.APPJSON, bodyType: typeof(List<TaskDTO>), Description = "Get all the task")]
+    [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: UtilityConsts.APPJSON, bodyType: typeof(List<TaskDTO>), Description = "Get all the tasks")]
     [FunctionName(nameof(GetAllTasks))]
     public async Task<IActionResult> GetAllTasks(
         [HttpTrigger(AuthorizationLevel.Anonymous, UtilityConsts.GET, Route = $"{ROUTE_NAME}s")] HttpRequest req,
@@ -73,6 +74,7 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
     /// Accept: application/json
     /// </remarks>
     /// <response code="200">Ok</response>
+    /// <response code="400">Bad Request</response>
     /// <response code="404">Not Found</response>
     [OpenApiOperation(operationId: nameof(GetTaskById), tags: [ROUTE_NAME])]
     [OpenApiParameter(name: nameof(id), In = ParameterLocation.Path, Required = true, Type = typeof(Guid), Description = "Task's id")]
@@ -248,10 +250,11 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
     /// Accept: application/json
     /// </remarks>
     /// <response code="204">No Content</response>
+    /// <response code="400">Bad Request</response>
     /// <response code="404">Not Found</response>
     [FunctionName(nameof(DeleteTask))]
     [OpenApiOperation(operationId: nameof(DeleteTask), tags: [ROUTE_NAME])]
-    [OpenApiParameter(name: nameof(req), In = ParameterLocation.Path, Required = true, Type = typeof(Guid), Description = "The id of the task to be delete")]
+    [OpenApiParameter(name: nameof(id), In = ParameterLocation.Path, Required = true, Type = typeof(Guid), Description = "The id of the task to be delete")]
     [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.NoContent, Description = "Deletes a task")]
     [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: UtilityConsts.APPJSON, bodyType: typeof(ErrorResponse), Description = "Model for errors")]
     [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.NotFound, Description = "Task was not found")]
@@ -274,6 +277,65 @@ public class TaskFunction(ITaskService taskService, IExceptionHandler exceptionH
             }
 
             return new NoContentResult();
+        }
+        catch (ArgumentException ex)
+        {
+            return new BadRequestObjectResult(new { Error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return _exceptionHandler.HandleException(ex);
+        }
+    }
+
+    /// <summary>
+    /// Assign a task to a user.
+    /// </summary>
+    /// <param name="nameof(id)"></param>
+    /// <param name="nameof(email)"></param>
+    /// <returns><see cref="TaskDTO"/></returns>
+    /// <remarks>
+    /// Usage Example:
+    /// PATCH task/id/assign/email
+    ///
+    /// Headers
+    /// Accept: application/json
+    /// </remarks>
+    /// <response code="200">Ok</response>
+    /// <response code="404">Not Found</response>
+    [OpenApiOperation(operationId: nameof(AssignedUserToATask), tags: [ROUTE_NAME])]
+    [OpenApiParameter(name: nameof(taskId), In = ParameterLocation.Path, Required = true, Type = typeof(Guid), Description = "The id of the task to be updated")]
+    [OpenApiParameter(name: nameof(email), In = ParameterLocation.Path, Required = true, Type = typeof(string), Description = "The user's email to be assigned to the task")]
+    [OpenApiResponseWithBody(statusCode: HttpStatusCode.OK, contentType: UtilityConsts.APPJSON, bodyType: typeof(TaskDTO), Description = "The updated task")]
+    [OpenApiResponseWithBody(statusCode: HttpStatusCode.BadRequest, contentType: UtilityConsts.APPJSON, bodyType: typeof(string), Description = "Provided values contains errors")]
+    [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.NotFound, Description = "Task was not found")]
+    [OpenApiResponseWithoutBody(statusCode: HttpStatusCode.NotFound, Description = "User was not found")]
+    [FunctionName(nameof(AssignedUserToATask))]
+    public async Task<IActionResult> AssignedUserToATask(
+        [HttpTrigger(AuthorizationLevel.Anonymous, UtilityConsts.PATCH, Route = $"{ROUTE_NAME}/{{taskId}}/assign/{{email}}")] HttpRequest req,
+        Guid taskId,
+        string email,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (taskId == Guid.Empty)
+            {
+                return new BadRequestObjectResult(new { Error = UtilityConsts.VALIDATION_ID_NOT_EMPTY });
+            }
+
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return new BadRequestObjectResult(new { Error = UtilityConsts.VALIDATION_EMAIL_NOT_EMPTY });
+            }
+
+            var task = await _taskService.AssignTaskToUserAsync(taskId, email, cancellationToken);
+            if (task == null)
+            {
+                return new NotFoundResult();
+            }
+
+            return new OkObjectResult(task);
         }
         catch (ArgumentException ex)
         {
