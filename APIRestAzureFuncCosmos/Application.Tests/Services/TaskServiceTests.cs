@@ -42,6 +42,7 @@ public class TaskServiceTests
     [Fact]
     public async Task CreateAsync_ShouldReturnSuccess_WhenTaskIsValid()
     {
+        //Arrange
         var dateTime = DateTime.UtcNow;
         var taskDto = new TaskDTO(Guid.NewGuid(), "Test Task", "Test Description", TaskItemStatus.Pending, dateTime, dateTime, dateTime, null);
         var taskEntity = TaskMapper.ToEntity(taskDto, _dateTimeProviderMock.Object);
@@ -52,8 +53,10 @@ public class TaskServiceTests
         _taskRepositoryMock.Setup(repo => repo.AddAsync(It.IsAny<TaskItem>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(taskEntity);
 
+        //Act
         var result = await _taskService.CreateAsync(taskDto, CancellationToken.None);
 
+        //Assert
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
     }
@@ -61,6 +64,7 @@ public class TaskServiceTests
     [Fact]
     public async Task CreateAsync_ShouldReturnFailure_WhenValidationFails()
     {
+        //Arrange
         var dateTime = DateTime.UtcNow;
         var taskDto = new TaskDTO(Guid.NewGuid(), string.Empty, string.Empty, TaskItemStatus.Pending, dateTime, dateTime, dateTime, null);
         var validationResult = new FluentValidation.Results.ValidationResult(new List<FluentValidation.Results.ValidationFailure>
@@ -72,8 +76,10 @@ public class TaskServiceTests
         _createValidatorMock.Setup(v => v.ValidateAsync(taskDto, It.IsAny<CancellationToken>()))
             .ReturnsAsync(validationResult);
 
+        //Act
         var result = await _taskService.CreateAsync(taskDto, CancellationToken.None);
 
+        //Assert
         Assert.False(result.IsSuccess);
         Assert.Equal(2, result.Errors.Count);
     }
@@ -99,21 +105,26 @@ public class TaskServiceTests
             .Setup(repo => repo.GetByIdAsync(taskId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(entity);
 
+        //Act
         var result = await _taskService.GetByIdAsync(taskId, CancellationToken.None);
 
+        //Assert
         Assert.NotNull(result);
     }
 
     [Fact]
     public async Task GetByIdAsync_ShouldReturnNull_WhenTaskDoesNotExist()
     {
+        //Arrange
         var taskId = Guid.NewGuid();
         _taskRepositoryMock
             .Setup(repo => repo.GetByIdAsync(taskId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((TaskItem?)null);
 
+        //Act
         var result = await _taskService.GetByIdAsync(taskId, CancellationToken.None);
 
+        //Assert
         Assert.Null(result);
     }
 }
