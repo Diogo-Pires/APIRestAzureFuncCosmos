@@ -7,10 +7,6 @@ namespace Domain.ValueObjects;
 
 public class Deadline
 {
-    public Deadline()
-    {
-    }
-
     public DateTime? Value { get; }
 
     public Deadline(DateTime? deadlineDate, DateTime createdDate, IDateTimeProvider dateTimeProvider)
