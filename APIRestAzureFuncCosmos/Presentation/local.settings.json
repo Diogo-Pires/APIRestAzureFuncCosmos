@@ -11,5 +11,8 @@
     "CosmosDb:UserContainerName": "UserContainer",
     "Jagger:AgentHost": "localhost",
     "Jagger:AgentPort": 16686
+  },
+  "Host": {
+    "CORS": "http://localhost:5173"
   }
 }
